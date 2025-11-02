@@ -1,38 +1,70 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { CocktailsGrid } from "@/components/cocktails-grid.tsx";
 import { DynamicPagination } from "@/components/dynamic-pagination.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import type { ResponseData } from "@/types.ts";
+import { CocktailFilters } from "@/components/filters.tsx";
+import type { CocktailCategory, CocktailGlass, ResponseData } from "@/types.ts";
 
-async function getCocktails(page = 1, search = "") {
+interface Filters {
+  name: string;
+  category: CocktailCategory;
+  glass: CocktailGlass;
+  alcoholic: boolean | null;
+}
+
+async function getCocktails(page = 1, filters: Filters): Promise<ResponseData> {
+  const parameters = new URLSearchParams({
+    page: page.toString(),
+    perPage: "15",
+  });
+
+  if (filters.name) {
+    parameters.append("name", `%${filters.name}%`);
+  }
+  if (filters.category) {
+    parameters.append("category", filters.category);
+  }
+  if (filters.glass) {
+    parameters.append("glass", filters.glass);
+  }
+  if (filters.alcoholic !== null) {
+    parameters.append("alcoholic", filters.alcoholic.toString());
+  }
+
   const response = await fetch(
-    `https://cocktails.solvro.pl/api/v1/cocktails?page=${page.toString()}&perPage=15${search ? `&name=%${search}%` : ""}`,
+    `https://cocktails.solvro.pl/api/v1/cocktails?${parameters.toString()}`,
   );
-  const data = (await response.json()) as ResponseData;
-  return data;
+  return (await response.json()) as ResponseData;
 }
 
 export function FrontPage() {
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const query = useQuery({
-    queryKey: ["cocktails", page, search],
-    queryFn: async () => getCocktails(page, search),
+  const [filters, setFilters] = useState<Filters>({
+    name: "",
+    category: null,
+    glass: null,
+    alcoholic: null,
   });
 
+  const query = useQuery({
+    queryKey: ["cocktails", page, filters],
+    queryFn: async () => getCocktails(page, filters),
+    placeholderData: keepPreviousData,
+  });
+
+  const handleFiltersChange = (newFilters: Filters) => {
+    setFilters(newFilters);
+    setPage(1);
+  };
+
   return (
-    <div>
-      <Input
-        value={search}
-        onChange={(event) => {
-          setSearch(event.target.value);
-        }}
-        placeholder="Wyszukaj..."
+    <div className="flex flex-col gap-4">
+      <CocktailFilters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
       />
-      <div></div>
-      <div className="w-fit gap-4">
+      <div className="gap-4">
         <CocktailsGrid cocktails={query.data?.data ?? []} />
       </div>
       {query.data?.meta != null && (

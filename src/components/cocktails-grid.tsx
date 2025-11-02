@@ -1,44 +1,35 @@
-import { useCallback, useState } from "react";
-
 import { CocktailItem } from "@/components/cocktail-item.tsx";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty.tsx";
+import { useFavourites } from "@/hooks/use-favourites.ts";
 import type { Cocktail } from "@/types.ts";
 
-function getFavouritesFromStorage(): number[] {
-  try {
-    const data = localStorage.getItem("favourites");
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const parsed = JSON.parse(data ?? "[]");
-    return (Array.isArray(parsed) ? parsed : []) as number[];
-  } catch {
-    return [];
-  }
-}
-
-function saveFavouritesToStorage(favourites: number[]) {
-  localStorage.setItem("favourites", JSON.stringify(favourites));
-}
-
 export function CocktailsGrid({ cocktails }: { cocktails: Cocktail[] }) {
-  const [favourites, setFavourites] = useState<number[]>(() =>
-    getFavouritesFromStorage(),
-  );
+  const { toggleFavourite, isFavourite } = useFavourites();
 
-  const toggleFavourite = useCallback((cocktailId: number) => {
-    setFavourites((previous) => {
-      const newFavourites = previous.includes(cocktailId)
-        ? previous.filter((id) => id !== cocktailId)
-        : [...previous, cocktailId];
-      saveFavouritesToStorage(newFavourites);
-      return newFavourites;
-    });
-  }, []);
+  if (cocktails.length === 0) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>No cocktails found</EmptyTitle>
+          <EmptyDescription>
+            Try adjusting your filters or search for something else.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
       {cocktails.map((cocktail) => (
         <CocktailItem
           cocktail={cocktail}
-          isFavourite={favourites.includes(cocktail.id)}
+          isFavourite={isFavourite(cocktail.id)}
           onFavouriteToggle={() => {
             toggleFavourite(cocktail.id);
           }}

@@ -60,8 +60,10 @@ export function DynamicPagination({
           />
         </PaginationItem>
 
-        {getPageNumbers().map((p) => (
-          <PaginationItem key={p}>
+        {getPageNumbers().map((p, index) => (
+          <PaginationItem
+            key={`${p.toString()}-pagination-page-${index.toString()}`}
+          >
             {typeof p === "number" ? (
               <PaginationLink
                 href="#"

@@ -1,47 +1,75 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 
 import { CocktailsGrid } from "@/components/cocktails-grid.tsx";
-import { DynamicPagination } from "@/components/dynamic-pagination.tsx";
-import { Input } from "@/components/ui/input.tsx";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty.tsx";
+import { useFavourites } from "@/hooks/use-favourites.ts";
 import type { ResponseData } from "@/types.ts";
 
-async function getCocktails(page = 1, search = "") {
+async function getFavouritesCocktails(
+  favouriteIds: number[],
+): Promise<ResponseData> {
+  if (favouriteIds.length === 0) {
+    return {
+      meta: {
+        total: 0,
+        perPage: 15,
+        currentPage: 1,
+        lastPage: 1,
+        firstPage: 1,
+        firstPageUrl: null,
+        lastPageUrl: null,
+        nextPageUrl: null,
+        previousPageUrl: null,
+      },
+      data: [],
+    };
+  }
+
+  const parameters = new URLSearchParams();
+  for (const id of favouriteIds) {
+    parameters.append("id[]", id.toString());
+  }
+
   const response = await fetch(
-    `https://cocktails.solvro.pl/api/v1/cocktails?page=${page.toString()}&perPage=15${search ? `&name=%${search}%` : ""}`,
+    `https://cocktails.solvro.pl/api/v1/cocktails?${parameters.toString()}`,
   );
-  const data = (await response.json()) as ResponseData;
-  return data;
+
+  return (await response.json()) as ResponseData;
 }
 
 export function FavouritesPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const { favourites } = useFavourites();
+
   const query = useQuery({
-    queryKey: ["cocktails", page, search],
-    queryFn: async () => getCocktails(page, search),
+    queryKey: ["favourites", favourites],
+    queryFn: async () => getFavouritesCocktails(favourites),
+    enabled: favourites.length > 0,
   });
 
+  if (favourites.length === 0) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>No favourites yet</EmptyTitle>
+          <EmptyDescription>
+            Start adding cocktails to your favourites!
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
+
   return (
-    <div>
-      <Input
-        value={search}
-        onChange={(event) => {
-          setSearch(event.target.value);
-        }}
-        placeholder="Wyszukaj..."
-      />
-      <div></div>
-      <div className="w-fit gap-4">
+    <div className="flex flex-col gap-4">
+      <h1 className="text-2xl font-bold">My Favourites</h1>
+      <div className="gap-4">
         <CocktailsGrid cocktails={query.data?.data ?? []} />
       </div>
-      {query.data?.meta != null && (
-        <DynamicPagination
-          meta={query.data.meta}
-          currentPage={page}
-          onPageChange={setPage}
-        />
-      )}
     </div>
   );
 }

@@ -1,4 +1,6 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+
+import { ThemeProviderContext } from "./use-theme";
 
 type Theme = "dark" | "light" | "system";
 
@@ -8,18 +10,6 @@ interface ThemeProviderProps {
   storageKey?: string;
 }
 
-interface ThemeProviderState {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-}
-
-const initialState: ThemeProviderState = {
-  theme: "system",
-  setTheme: () => null,
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
-
 export function ThemeProvider({
   children,
   defaultTheme = "system",
@@ -27,8 +17,7 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
-    () =>
-      (localStorage.getItem(storageKey) as Theme | undefined) ?? defaultTheme,
+    () => (localStorage.getItem(storageKey) as Theme | null) ?? defaultTheme,
   );
 
   useEffect(() => {
@@ -52,9 +41,9 @@ export function ThemeProvider({
 
   const value = {
     theme,
-    setTheme: (_theme: Theme) => {
-      localStorage.setItem(storageKey, _theme);
-      setTheme(theme);
+    setTheme: (newTheme: Theme) => {
+      localStorage.setItem(storageKey, newTheme);
+      setTheme(newTheme);
     },
   };
 
@@ -64,15 +53,3 @@ export function ThemeProvider({
     </ThemeProviderContext.Provider>
   );
 }
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
-
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-
-  return context;
-};
