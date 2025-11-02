@@ -5,7 +5,8 @@ import {
 } from "lucide-react";
 import * as React from "react";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import type { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
@@ -49,13 +50,14 @@ function PaginationLink({
   ...props
 }: PaginationLinkProps) {
   return (
+    // eslint-disable-next-line jsx-a11y/anchor-has-content
     <a
-      aria-current={isActive ? "page" : undefined}
+      aria-current={isActive === true ? "page" : undefined}
       data-slot="pagination-link"
       data-active={isActive}
       className={cn(
         buttonVariants({
-          variant: isActive ? "outline" : "ghost",
+          variant: isActive === true ? "outline" : "ghost",
           size,
         }),
         className,

@@ -24,7 +24,7 @@ function NavigationMenu({
       {...props}
     >
       {children}
-      {viewport && <NavigationMenuViewport />}
+      {viewport ? <NavigationMenuViewport /> : null}
     </NavigationMenuPrimitive.Root>
   );
 }
@@ -164,5 +164,6 @@ export {
   NavigationMenuLink,
   NavigationMenuIndicator,
   NavigationMenuViewport,
+  // eslint-disable-next-line react-refresh/only-export-components
   navigationMenuTriggerStyle,
 };

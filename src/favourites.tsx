@@ -14,7 +14,7 @@ async function getCocktails(page = 1, search = "") {
   return data;
 }
 
-export function FrontPage() {
+export function FavouritesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const query = useQuery({
